@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Build artifacts
+build_debug/
+build_release/
+*.o
+*.a
+
+# IDE
+.vscode/
+.idea/
+*.swp

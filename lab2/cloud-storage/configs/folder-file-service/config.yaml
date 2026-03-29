@@ -1,0 +1,79 @@
+components_manager:
+  task_processors:
+    main-task-processor:
+      worker_threads: $worker_threads
+    fs-task-processor:
+      worker_threads: 2
+
+  default_task_processor: main-task-processor
+
+  components:
+    server:
+      listener:
+        port: $server_port
+        task_processor: main-task-processor
+
+    logging:
+      fs-task-processor: fs-task-processor
+      loggers:
+        default:
+          file_path: '@stderr'
+          level: $log_level
+          overflow_behavior: discard
+
+    tracer:
+      service-name: folder-file-service
+
+    handler-folders-create:
+      path: /api/v1/folders
+      method: POST
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-folders-list:
+      path: /api/v1/folders
+      method: GET
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-folders-delete:
+      path: /api/v1/folders/{folder_id}
+      method: DELETE
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-files-create:
+      path: /api/v1/folders/{folder_id}/files
+      method: POST
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-files-get-by-name:
+      path: /api/v1/folders/{folder_id}/files/{file_name}
+      method: GET
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-files-delete:
+      path: /api/v1/folders/{folder_id}/files/{file_id}/delete
+      method: DELETE
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    jwt-auth-checker:
+      load-enabled: true
+
+    file-system-service:
+      load-enabled: true

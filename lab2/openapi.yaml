@@ -1,0 +1,639 @@
+openapi: 3.0.3
+info:
+  title: Cloud Storage API
+  description: |
+    REST API для системы хранения файлов (вариант 11).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+
+tags:
+  - name: auth
+    description: Аутентификация и регистрация
+  - name: users
+    description: Управление пользователями
+  - name: folders
+    description: Управление папками
+  - name: files
+    description: Управление файлами
+
+paths:
+
+  # ─── AUTH ────────────────────────────────────────────────────────────────────
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Регистрация нового пользователя
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+            example:
+              login: "savelyy"
+              first_name: "Савелий"
+              last_name: "Самсонов"
+              password: "secret123"
+      responses:
+        '201':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Пользователь с таким логином уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "User with login 'savelyy' already exists"
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Вход в систему, получение JWT токена
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              login: "savelyy"
+              password: "secret123"
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                user:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  login: "savelyy"
+                  first_name: "Савелий"
+                  last_name: "Самсонов"
+        '401':
+          description: Неверный логин или пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ─── USERS ───────────────────────────────────────────────────────────────────
+
+  /users/{login}:
+    get:
+      tags: [users]
+      summary: Поиск пользователя по логину
+      description: |
+        Доступен только пользователям с ролью `admin`.
+      operationId: getUserByLogin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: login
+          in: path
+          required: true
+          description: Логин пользователя
+          schema:
+            type: string
+            minLength: 1
+          example: savelyy
+      responses:
+        '200':
+          description: Пользователь найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users:
+    get:
+      tags: [users]
+      summary: Поиск пользователей по маске имени и/или фамилии (только admin)
+      description: |
+        Доступен только пользователям с ролью `admin`.
+      operationId: searchUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: first_name
+          in: query
+          required: false
+          description: Маска имени (поиск по подстроке, без учёта регистра)
+          schema:
+            type: string
+          example: "Сав"
+        - name: last_name
+          in: query
+          required: false
+          description: Маска фамилии (поиск по подстроке, без учёта регистра)
+          schema:
+            type: string
+          example: "Самс"
+      responses:
+        '200':
+          description: Список пользователей (может быть пустым)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Не указан ни один параметр поиска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав (требуется роль admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Forbidden"
+                details: "User search requires admin role. Access denied for role 'user'"
+
+  # ─── FOLDERS ─────────────────────────────────────────────────────────────────
+
+  /folders:
+    post:
+      tags: [folders]
+      summary: Создание новой папки
+      operationId: createFolder
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FolderCreateRequest'
+            example:
+              name: "Документы"
+      responses:
+        '201':
+          description: Папка создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Папка с таким именем уже существует у пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags: [folders]
+      summary: Получение списка всех папок текущего пользователя
+      operationId: listFolders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список папок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FolderResponse'
+              example:
+                - id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  name: "Документы"
+                  owner_id: "550e8400-e29b-41d4-a716-446655440000"
+                  created_at: "2024-01-15T10:30:00Z"
+                - id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                  name: "Фото"
+                  owner_id: "550e8400-e29b-41d4-a716-446655440000"
+                  created_at: "2024-01-16T08:00:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /folders/{folder_id}:
+    delete:
+      tags: [folders]
+      summary: Удаление папки
+      operationId: deleteFolder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: folder_id
+          in: path
+          required: true
+          description: UUID папки
+          schema:
+            type: string
+            format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+      responses:
+        '204':
+          description: Папка удалена (вместе со всеми файлами внутри)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет прав на удаление (не владелец папки)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── FILES ───────────────────────────────────────────────────────────────────
+
+  /folders/{folder_id}/files:
+    post:
+      tags: [files]
+      summary: Создание файла в папке
+      operationId: createFile
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: folder_id
+          in: path
+          required: true
+          description: UUID папки
+          schema:
+            type: string
+            format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileCreateRequest'
+            example:
+              name: "report.pdf"
+              content_type: "application/pdf"
+              size: 204800
+              content: "base64encodedcontent..."
+      responses:
+        '201':
+          description: Файл создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет прав на запись в папку
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Папка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Файл с таким именем уже существует в папке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /folders/{folder_id}/files/{file_name}:
+    get:
+      tags: [files]
+      summary: Получение файла по имени
+      operationId: getFileByName
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: folder_id
+          in: path
+          required: true
+          description: UUID папки
+          schema:
+            type: string
+            format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        - name: file_name
+          in: path
+          required: true
+          description: Имя файла
+          schema:
+            type: string
+            minLength: 1
+          example: report.pdf
+      responses:
+        '200':
+          description: Файл найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет прав на чтение файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /folders/{folder_id}/files/{file_id}/delete:
+    delete:
+      tags: [files]
+      summary: Удаление файла
+      operationId: deleteFile
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: folder_id
+          in: path
+          required: true
+          description: UUID папки
+          schema:
+            type: string
+            format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        - name: file_id
+          in: path
+          required: true
+          description: UUID файла
+          schema:
+            type: string
+            format: uuid
+          example: c3d4e5f6-a7b8-9012-cdef-123456789012
+      responses:
+        '204':
+          description: Файл удалён
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет прав на удаление файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ─── COMPONENTS ──────────────────────────────────────────────────────────────
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен, полученный через POST /auth/login
+
+  schemas:
+
+    # ── Request schemas ───────────────────────────────────────────────────────
+
+    UserRegisterRequest:
+      type: object
+      required: [login, first_name, last_name, password]
+      properties:
+        login:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_\-]+$'
+          description: Уникальный логин пользователя
+          example: savelyy
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Имя
+          example: Савелий
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Фамилия
+          example: Самсонов
+        password:
+          type: string
+          minLength: 6
+          format: password
+          description: Пароль (минимум 6 символов)
+          example: secret123
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+          description: Роль пользователя в системе
+          example: user
+
+    LoginRequest:
+      type: object
+      required: [login, password]
+      properties:
+        login:
+          type: string
+          example: savelyy
+        password:
+          type: string
+          format: password
+          example: secret123
+
+    FolderCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Название папки
+          example: Документы
+
+    FileCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Имя файла
+          example: report.pdf
+        content_type:
+          type: string
+          description: MIME-тип файла
+          example: application/pdf
+          default: application/octet-stream
+        size:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Размер файла в байтах
+          example: 204800
+        content:
+          type: string
+          description: Содержимое файла в Base64 (опционально)
+          example: "JVBERi0xLjQK..."
+
+    # ── Response schemas ──────────────────────────────────────────────────────
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        login:
+          type: string
+          example: savelyy
+        first_name:
+          type: string
+          example: Савелий
+        last_name:
+          type: string
+          example: Самсонов
+        role:
+          type: string
+          enum: [user, admin]
+          description: Роль пользователя (user/admin)
+          example: user
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT Bearer токен
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    FolderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        name:
+          type: string
+          example: Документы
+        owner_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    FileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: c3d4e5f6-a7b8-9012-cdef-123456789012
+        name:
+          type: string
+          example: report.pdf
+        folder_id:
+          type: string
+          format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        owner_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        content_type:
+          type: string
+          example: application/pdf
+        size:
+          type: integer
+          format: int64
+          example: 204800
+        content:
+          type: string
+          description: Содержимое файла в Base64
+          example: "JVBERi0xLjQK..."
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Описание ошибки
+          example: "Resource not found"
+        details:
+          type: string
+          description: Дополнительные детали (опционально)
+          example: "Folder with id 'a1b2...' not found"
+
+  responses:
+    BadRequest:
+      description: Некорректные входные данные
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Validation failed"
+            details: "Field 'login' is required"
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Unauthorized"
+            details: "Missing or invalid JWT token"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Not found"
+            details: "Requested resource does not exist"

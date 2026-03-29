@@ -1,0 +1,3 @@
+server_port: 8081
+worker_threads: 4
+log_level: info
