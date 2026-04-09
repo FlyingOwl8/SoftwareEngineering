@@ -25,7 +25,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjemalloc-dev \
     libre2-dev \
     liblz4-dev \
+    libmongoc-dev \
+    libbson-dev \
     libnghttp2-dev \
+    libkrb5-dev \
+    libldap2-dev \
+    libpq-dev \
+    postgresql-server-dev-14 \
     libssl-dev \
     libyaml-cpp-dev \
     libzstd-dev \

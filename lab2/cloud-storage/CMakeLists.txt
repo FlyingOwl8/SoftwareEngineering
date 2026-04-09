@@ -6,7 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(userver COMPONENTS core QUIET)
+set(USERVER_FEATURE_POSTGRESQL ON CACHE BOOL "" FORCE)
+set(USERVER_FEATURE_MONGODB    ON CACHE BOOL "" FORCE)
+
+find_package(userver COMPONENTS core postgresql mongodb QUIET)
 if(NOT userver_FOUND)
     include(DownloadUserver)
     download_userver(
@@ -41,6 +44,7 @@ set(SHARED_SOURCES
 add_executable(user-service
     src/user-service/main.cpp
     src/user-service/repository/in_memory_user_repository.cpp
+    src/user-service/repository/postgres_user_repository.cpp
     src/user-service/service/user_service.cpp
     src/user-service/handlers/auth/register_handler.cpp
     src/user-service/handlers/auth/login_handler.cpp
@@ -48,7 +52,7 @@ add_executable(user-service
     src/user-service/handlers/users/search_handler.cpp
     ${SHARED_SOURCES}
 )
-target_link_libraries(user-service userver::core jwt-cpp::jwt-cpp)
+target_link_libraries(user-service userver::core userver::postgresql jwt-cpp::jwt-cpp)
 target_include_directories(user-service PRIVATE
     src/shared
     src/user-service
@@ -59,6 +63,7 @@ target_include_directories(user-service PRIVATE
 add_executable(folder-file-service
     src/folder-file-service/main.cpp
     src/folder-file-service/repository/in_memory_file_system_repository.cpp
+    src/folder-file-service/repository/mongo_file_system_repository.cpp
     src/folder-file-service/service/file_system_service.cpp
     src/folder-file-service/handlers/folders/create_folder_handler.cpp
     src/folder-file-service/handlers/folders/list_folders_handler.cpp
@@ -68,7 +73,7 @@ add_executable(folder-file-service
     src/folder-file-service/handlers/files/delete_file_handler.cpp
     ${SHARED_SOURCES}
 )
-target_link_libraries(folder-file-service userver::core jwt-cpp::jwt-cpp)
+target_link_libraries(folder-file-service userver::core userver::mongo jwt-cpp::jwt-cpp)
 target_include_directories(folder-file-service PRIVATE
     src/shared
     src/folder-file-service

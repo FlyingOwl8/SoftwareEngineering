@@ -10,6 +10,7 @@
 
 #include <userver/components/component_base.hpp>
 #include <userver/components/component_list.hpp>
+#include <userver/yaml_config/merge_schemas.hpp>
 
 namespace disk::folder_file_service {
 
@@ -19,6 +20,8 @@ public:
 
     FileSystemService(const userver::components::ComponentConfig& config,
                       const userver::components::ComponentContext& context);
+
+    static userver::yaml_config::Schema GetStaticConfigSchema();
 
     // ── Папки ─────────────────────────────────────────────────────────────────
 

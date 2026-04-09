@@ -55,3 +55,15 @@ components_manager:
 
     user-service-logic:
       load-enabled: true
+
+    testsuite-support:
+      load-enabled: true
+
+    dns-client:
+      fs-task-processor: fs-task-processor
+
+    postgres-db:
+      dbconnection: "postgresql://postgres:XXXXXXXX@postgres-db:5432/cloud_storage?sslmode=disable&gssencmode=disable"
+      blocking_task_processor: fs-task-processor
+      dns_resolver: async
+      load-enabled: $postgres_enabled

@@ -1,5 +1,6 @@
 #include "file_system_service.hpp"
 #include "repository/in_memory_file_system_repository.hpp"
+#include "repository/mongo_file_system_repository.hpp"
 
 #include <random>
 #include <sstream>
@@ -7,14 +8,22 @@
 
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
+#include <userver/storages/mongo/component.hpp>
 
 namespace disk::folder_file_service {
 
 FileSystemService::FileSystemService(
     const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context)
-    : ComponentBase(config, context),
-      repository_(std::make_unique<InMemoryFileSystemRepository>()) {}
+    : ComponentBase(config, context)
+{
+    if (config["use_mongo"].As<bool>(false)) {
+        auto& mongo = context.FindComponent<userver::components::Mongo>("mongo-db");
+        repository_ = std::make_unique<MongoFileSystemRepository>(mongo.GetPool());
+    } else {
+        repository_ = std::make_unique<InMemoryFileSystemRepository>();
+    }
+}
 
 std::optional<models::Folder> FileSystemService::CreateFolder(
     const std::string& name,
@@ -101,6 +110,18 @@ std::string FileSystemService::GenerateUuid() {
        << std::setw(4)  << (lo >> 48)                << '-'
        << std::setw(12) << (lo & 0xFFFFFFFFFFFFULL);
     return ss.str();
+}
+
+userver::yaml_config::Schema FileSystemService::GetStaticConfigSchema() {
+    return userver::yaml_config::MergeSchemas<ComponentBase>(R"(
+type: object
+description: File system service (in-memory or MongoDB)
+additionalProperties: false
+properties:
+    use_mongo:
+        type: boolean
+        description: Use MongoDB repository instead of in-memory
+)");
 }
 
 void AppendFileSystemService(userver::components::ComponentList& component_list) {

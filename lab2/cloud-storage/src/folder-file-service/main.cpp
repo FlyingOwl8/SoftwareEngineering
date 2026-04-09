@@ -11,10 +11,14 @@
 
 #include "exceptions.hpp"
 
+#include <cstdlib>
 #include <memory>
 
 #include <userver/components/minimal_server_component_list.hpp>
+#include <userver/clients/dns/component.hpp>
+#include <userver/testsuite/testsuite_support.hpp>
 #include <userver/server/handlers/auth/auth_checker_factory.hpp>
+#include <userver/storages/mongo/component.hpp>
 #include <userver/utils/daemon_run.hpp>
 
 int main(int argc, char* argv[]) {
@@ -27,6 +31,10 @@ int main(int argc, char* argv[]) {
     disk::auth::InitJwt(secret, std::stoi(exp));
 
     auto component_list = userver::components::MinimalServerComponentList();
+
+    component_list.Append<userver::components::TestsuiteSupport>();
+    component_list.Append<userver::clients::dns::Component>();
+    component_list.Append<userver::components::Mongo>("mongo-db");
 
     component_list.Append<disk::auth::JwtAuthComponent>();
     userver::server::handlers::auth::RegisterAuthCheckerFactory(

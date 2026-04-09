@@ -1,5 +1,6 @@
 #include "user_service.hpp"
 #include "repository/in_memory_user_repository.hpp"
+#include "repository/postgres_user_repository.hpp"
 #include "utils/password_utils.hpp"
 
 #include "exceptions.hpp"
@@ -13,15 +14,23 @@
 
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
+#include <userver/storages/postgres/component.hpp>
 
 namespace disk::user_service {
 
 UserService::UserService(
     const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context)
-    : ComponentBase(config, context),
-      repository_(std::make_unique<InMemoryUserRepository>())
+    : ComponentBase(config, context)
 {
+    const char* dsn = std::getenv("POSTGRES_DSN");
+    if (dsn && dsn[0] != '\0') {
+        auto& pg = context.FindComponent<userver::components::Postgres>("postgres-db");
+        repository_ = std::make_unique<PostgresUserRepository>(pg.GetCluster());
+    } else {
+        repository_ = std::make_unique<InMemoryUserRepository>();
+    }
+
     const char* login  = std::getenv("ADMIN_LOGIN");
     const char* pass   = std::getenv("ADMIN_PASSWORD");
     const char* fname  = std::getenv("ADMIN_FIRST_NAME");

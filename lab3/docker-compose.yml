@@ -1,0 +1,81 @@
+services:
+
+  postgres-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: XXXXXXXX
+      POSTGRES_DB: cloud_storage
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./data.sql:/docker-entrypoint-initdb.d/02_data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cloud_storage"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  user-service:
+    build:
+      context: ../lab2
+      dockerfile: Dockerfile
+    expose:
+      - "8081"
+    environment:
+      JWT_SECRET: disk-service-dev-secret-change-in-production
+      JWT_EXPIRATION_HOURS: "24"
+      ADMIN_LOGIN: admin
+      ADMIN_PASSWORD: admin123
+      ADMIN_FIRST_NAME: Admin
+      ADMIN_LAST_NAME: User
+    volumes:
+      - ./configs/user-service/config_vars.yaml:/cloud-storage/configs/user-service/config_vars.yaml:ro
+    command:
+      - "/cloud-storage/build_debug/user-service"
+      - "--config"
+      - "/cloud-storage/configs/user-service/config.yaml"
+      - "--config_vars"
+      - "/cloud-storage/configs/user-service/config_vars.yaml"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  folder-file-service:
+    build:
+      context: ../lab2
+      dockerfile: Dockerfile
+    expose:
+      - "8082"
+    environment:
+      JWT_SECRET: disk-service-dev-secret-change-in-production
+      JWT_EXPIRATION_HOURS: "24"
+    command:
+      - "/cloud-storage/build_debug/folder-file-service"
+      - "--config"
+      - "/cloud-storage/configs/folder-file-service/config.yaml"
+      - "--config_vars"
+      - "/cloud-storage/configs/folder-file-service/config_vars.yaml"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../lab2/configs/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - user-service
+      - folder-file-service
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    ports:
+      - "8081:8080"
+    volumes:
+      - ../lab2/openapi.yaml:/tmp/openapi.yaml:ro
+    environment:
+      SWAGGER_JSON: /tmp/openapi.yaml
+
+volumes:
+  postgres_data:

@@ -77,3 +77,14 @@ components_manager:
 
     file-system-service:
       load-enabled: true
+      use_mongo: $mongo_enabled
+
+    testsuite-support:
+      load-enabled: false
+
+    dns-client:
+      fs-task-processor: fs-task-processor
+
+    mongo-db:
+      dbconnection: "mongodb://mongodb:27017/cloud_storage"
+      load-enabled: $mongo_enabled
