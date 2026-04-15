@@ -18,7 +18,7 @@ services:
       retries: 10
 
   mongodb:
-    image: mongo:7
+    image: mongo:5
     volumes:
       - mongo_data:/data/db
       - ./data.js:/docker-entrypoint-initdb.d/data.js:ro
