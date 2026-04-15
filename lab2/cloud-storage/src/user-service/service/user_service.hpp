@@ -10,6 +10,7 @@
 
 #include <userver/components/component_base.hpp>
 #include <userver/components/component_list.hpp>
+#include <userver/yaml_config/schema.hpp>
 
 namespace disk::user_service {
 
@@ -30,6 +31,8 @@ public:
 
     std::vector<models::User> SearchUsers(const std::string& first_name_mask,
                                           const std::string& last_name_mask) const;
+
+    static userver::yaml_config::Schema GetStaticConfigSchema();
 
 private:
     std::unique_ptr<IUserRepository> repository_;

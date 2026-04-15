@@ -55,6 +55,7 @@ components_manager:
 
     user-service-logic:
       load-enabled: true
+      use_postgres: $postgres_enabled
 
     testsuite-support:
       load-enabled: true

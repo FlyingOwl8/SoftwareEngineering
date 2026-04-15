@@ -6,7 +6,6 @@
 #include "exceptions.hpp"
 
 #include <algorithm>
-#include <cstdlib>
 #include <random>
 #include <sstream>
 #include <iomanip>
@@ -15,6 +14,7 @@
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/storages/postgres/component.hpp>
+#include <userver/yaml_config/merge_schemas.hpp>
 
 namespace disk::user_service {
 
@@ -23,8 +23,7 @@ UserService::UserService(
     const userver::components::ComponentContext& context)
     : ComponentBase(config, context)
 {
-    const char* dsn = std::getenv("POSTGRES_DSN");
-    if (dsn && dsn[0] != '\0') {
+    if (config["use_postgres"].As<bool>(false)) {
         auto& pg = context.FindComponent<userver::components::Postgres>("postgres-db");
         repository_ = std::make_unique<PostgresUserRepository>(pg.GetCluster());
     } else {
@@ -115,6 +114,18 @@ std::string UserService::ToLower(std::string s) {
 bool UserService::ContainsIgnoreCase(const std::string& haystack,
                                      const std::string& needle) {
     return ToLower(haystack).find(ToLower(needle)) != std::string::npos;
+}
+
+userver::yaml_config::Schema UserService::GetStaticConfigSchema() {
+    return userver::yaml_config::MergeSchemas<ComponentBase>(R"(
+type: object
+description: User service (in-memory or PostgreSQL)
+additionalProperties: false
+properties:
+    use_postgres:
+        type: boolean
+        description: Use PostgreSQL repository instead of in-memory
+)");
 }
 
 void AppendUserService(userver::components::ComponentList& component_list) {
