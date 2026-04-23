@@ -10,7 +10,6 @@ class MongoFileSystemRepository final : public IFileSystemRepository {
 public:
     explicit MongoFileSystemRepository(userver::storages::mongo::PoolPtr pool);
 
-    // ── Папки ─────────────────────────────────────────────────────────────────
 
     bool FolderNameExists(const std::string& owner_id,
                           const std::string& name) const override;
@@ -19,7 +18,6 @@ public:
     std::vector<models::Folder>   FindFoldersByOwner(const std::string& owner_id) const override;
     bool DeleteFolderCascade(const std::string& folder_id) override;
 
-    // ── Файлы ─────────────────────────────────────────────────────────────────
 
     bool FileNameExists(const std::string& folder_id,
                         const std::string& name) const override;

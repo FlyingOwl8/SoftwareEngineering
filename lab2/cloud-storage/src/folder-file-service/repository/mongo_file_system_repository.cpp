@@ -11,8 +11,6 @@ namespace mongo = userver::storages::mongo;
 static constexpr std::string_view kFolders = "folders";
 static constexpr std::string_view kFiles   = "files";
 
-// Helper: build a BSON document from a list of key-value pairs at compile time.
-// Usage: MakeDoc("k1", v1, "k2", v2, ...)
 namespace {
 void FillDoc(bson::ValueBuilder&) {}
 
@@ -38,7 +36,6 @@ bson::Value MakeDoc(Args&&... args)
 MongoFileSystemRepository::MongoFileSystemRepository(mongo::PoolPtr pool)
     : pool_(std::move(pool)) {}
 
-// ── Папки ─────────────────────────────────────────────────────────────────────
 
 bool MongoFileSystemRepository::FolderNameExists(
     const std::string& owner_id, const std::string& name) const
@@ -90,7 +87,6 @@ bool MongoFileSystemRepository::DeleteFolderCascade(const std::string& folder_id
     return result.DeletedCount() > 0;
 }
 
-// ── Файлы ─────────────────────────────────────────────────────────────────────
 
 bool MongoFileSystemRepository::FileNameExists(
     const std::string& folder_id, const std::string& name) const
@@ -138,7 +134,6 @@ bool MongoFileSystemRepository::DeleteFile(const std::string& file_id) {
     return result.DeletedCount() > 0;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 models::Folder MongoFileSystemRepository::DocToFolder(const bson::Document& doc) {
     models::Folder folder;

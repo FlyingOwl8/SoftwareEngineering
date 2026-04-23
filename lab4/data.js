@@ -1,8 +1,6 @@
-// Очищаем коллекции перед вставкой
 db.folders.deleteMany({});
 db.files.deleteMany({});
 
-// UUID пользователей совпадают с PostgreSQL (lab3/data.sql)
 const users = {
   admin:  "00000000-0000-4000-a000-000000000001",
   alice:  "00000000-0000-4000-a000-000000000002",
@@ -16,7 +14,6 @@ const users = {
   irene:  "00000000-0000-4000-a000-000000000010",
 };
 
-// ── Папки (12 документов) ─────────────────────────────────────────────────────
 
 db.folders.insertMany([
   { _id: "10000000-0000-4000-a000-000000000001", name: "Documents",  owner_id: users.alice,  created_at: new Date("2025-01-10T08:00:00Z") },
@@ -33,7 +30,6 @@ db.folders.insertMany([
   { _id: "10000000-0000-4000-a000-000000000012", name: "Shared",     owner_id: users.irene,  created_at: new Date("2025-01-18T16:00:00Z") },
 ]);
 
-// ── Файлы (13 документов) ─────────────────────────────────────────────────────
 
 db.files.insertMany([
   {
@@ -168,7 +164,8 @@ db.files.insertMany([
   },
 ]);
 
-// ── Индексы ──────────────────────────────────────────────────────────────────
+
+// Индексы
 
 db.folders.createIndex({ owner_id: 1 });
 db.folders.createIndex({ owner_id: 1, name: 1 }, { unique: true });

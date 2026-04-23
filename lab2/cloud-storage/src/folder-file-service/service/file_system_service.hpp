@@ -23,7 +23,6 @@ public:
 
     static userver::yaml_config::Schema GetStaticConfigSchema();
 
-    // ── Папки ─────────────────────────────────────────────────────────────────
 
     std::optional<models::Folder> CreateFolder(const std::string& name,
                                                const std::string& owner_id);
@@ -33,7 +32,6 @@ public:
 
     bool DeleteFolder(const std::string& folder_id);
 
-    // ── Файлы ─────────────────────────────────────────────────────────────────
 
     std::optional<models::File> CreateFile(const std::string& folder_id,
                                            const std::string& owner_id,
