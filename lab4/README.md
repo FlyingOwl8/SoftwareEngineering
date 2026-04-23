@@ -88,24 +88,6 @@ Swagger UI: `http://localhost:8081`
 
 ---
 
-## Работа с MongoDB напрямую
-
-```bash
-# Подключиться
-docker exec -it lab4-mongodb-1 mongosh cloud_storage
-
-# Загрузить тестовые данные
-docker exec -i lab4-mongodb-1 mongosh cloud_storage < data.js
-
-# Выполнить запросы
-docker exec -i lab4-mongodb-1 mongosh cloud_storage < queries.js
-
-# Настроить валидацию
-docker exec -i lab4-mongodb-1 mongosh cloud_storage < validation.js
-```
-
----
-
 ## Структура файлов
 
 ```
