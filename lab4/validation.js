@@ -100,20 +100,19 @@ print("Валидация files настроена");
 
 
 
-print("\n--- Тест 1: папка без обязательного поля name ---");
+print("\n папка без обязательного поля name");
 try {
   db.folders.insertOne({
     _id: "cccccccc-0000-4000-a000-000000000001",
     owner_id: "00000000-0000-4000-a000-000000000002",
     created_at: new Date()
-    // name отсутствует
   });
   print("ОШИБКА: документ вставлен, но не должен был");
 } catch (e) {
   print("OK: вставка отклонена —", e.message.substring(0, 80));
 }
 
-print("\n--- Тест 2: папка с пустым именем (minLength: 1) ---");
+print("\n папка с пустым именем (minLength: 1)");
 try {
   db.folders.insertOne({
     _id: "cccccccc-0000-4000-a000-000000000002",
@@ -126,7 +125,7 @@ try {
   print("OK: вставка отклонена —", e.message.substring(0, 80));
 }
 
-print("\n--- Тест 3: папка с некорректным UUID владельца ---");
+print("\n папка с некорректным UUID владельца");
 try {
   db.folders.insertOne({
     _id: "cccccccc-0000-4000-a000-000000000003",
@@ -139,7 +138,7 @@ try {
   print("OK: вставка отклонена —", e.message.substring(0, 80));
 }
 
-print("\n--- Тест 4: файл с отрицательным размером (minimum: 0) ---");
+print("\n файл с отрицательным размером (minimum: 0)");
 try {
   db.files.insertOne({
     _id: "dddddddd-0000-4000-a000-000000000001",
@@ -156,7 +155,7 @@ try {
   print("OK: вставка отклонена —", e.message.substring(0, 80));
 }
 
-print("\n--- Тест 5: валидный документ (должен вставиться) ---");
+print("\n валидный документ (должен вставиться)");
 try {
   db.folders.insertOne({
     _id: "eeeeeeee-0000-4000-a000-000000000001",
@@ -169,5 +168,3 @@ try {
 } catch (e) {
   print("ОШИБКА: валидный документ отклонён —", e.message);
 }
-
-print("\n=== Тесты валидации завершены ===");
