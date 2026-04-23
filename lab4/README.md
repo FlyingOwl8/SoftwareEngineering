@@ -32,8 +32,6 @@ nginx:8080
 ### Требования
 - Docker / Podman + docker-compose / podman-compose
 
-### Полный стек (рекомендуется)
-
 ```bash
 cd lab4
 podman compose build && podman compose up
