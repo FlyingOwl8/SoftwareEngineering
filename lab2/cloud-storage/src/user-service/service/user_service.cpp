@@ -62,11 +62,15 @@ std::optional<models::User> UserService::CreateUser(
     user.created_at    = std::chrono::system_clock::now();
 
     repository_->Save(user);
+    user_cache_.Invalidate(login);
     return user;
 }
 
 std::optional<models::User> UserService::FindUserByLogin(const std::string& login) const {
-    return repository_->FindByLogin(login);
+    if (auto cached = user_cache_.Get(login)) return cached;
+    auto result = repository_->FindByLogin(login);
+    if (result) user_cache_.Set(login, *result);
+    return result;
 }
 
 std::vector<models::User> UserService::SearchUsers(

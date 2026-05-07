@@ -38,11 +38,15 @@ std::optional<models::Folder> FileSystemService::CreateFolder(
     folder.created_at = std::chrono::system_clock::now();
 
     repository_->SaveFolder(folder);
+    folders_cache_.Invalidate(owner_id);
     return folder;
 }
 
 std::vector<models::Folder> FileSystemService::ListFolders(const std::string& owner_id) const {
-    return repository_->FindFoldersByOwner(owner_id);
+    if (auto cached = folders_cache_.Get(owner_id)) return *cached;
+    auto result = repository_->FindFoldersByOwner(owner_id);
+    folders_cache_.Set(owner_id, result);
+    return result;
 }
 
 std::optional<models::Folder> FileSystemService::FindFolder(const std::string& folder_id) const {
@@ -50,7 +54,10 @@ std::optional<models::Folder> FileSystemService::FindFolder(const std::string& f
 }
 
 bool FileSystemService::DeleteFolder(const std::string& folder_id) {
-    return repository_->DeleteFolderCascade(folder_id);
+    auto folder = repository_->FindFolder(folder_id);
+    bool deleted = repository_->DeleteFolderCascade(folder_id);
+    if (deleted && folder) folders_cache_.Invalidate(folder->owner_id);
+    return deleted;
 }
 
 std::optional<models::File> FileSystemService::CreateFile(

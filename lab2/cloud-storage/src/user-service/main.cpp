@@ -6,6 +6,7 @@
 #include "handlers/auth/login_handler.hpp"
 #include "handlers/users/get_by_login_handler.hpp"
 #include "handlers/users/search_handler.hpp"
+#include "handlers/users/cache_stats_handler.hpp"
 
 #include "exceptions.hpp"
 
@@ -45,6 +46,7 @@ int main(int argc, char* argv[]) {
     disk::handlers::auth::AppendLoginHandler(component_list);
     disk::handlers::users::AppendGetByLoginHandler(component_list);
     disk::handlers::users::AppendSearchHandler(component_list);
+    disk::handlers::users::AppendCacheStatsHandler(component_list);
 
     return userver::utils::DaemonMain(argc, argv, component_list);
 }

@@ -2,6 +2,7 @@
 
 #include "repository/i_user_repository.hpp"
 #include "models/models.hpp"
+#include "cache/ttl_cache.hpp"
 
 #include <memory>
 #include <optional>
@@ -32,10 +33,15 @@ public:
     std::vector<models::User> SearchUsers(const std::string& first_name_mask,
                                           const std::string& last_name_mask) const;
 
+    TtlCache<std::string, models::User>::Stats GetUserCacheStats() const {
+        return user_cache_.GetStats();
+    }
+
     static userver::yaml_config::Schema GetStaticConfigSchema();
 
 private:
     std::unique_ptr<IUserRepository> repository_;
+    mutable TtlCache<std::string, models::User> user_cache_{std::chrono::seconds(300)};
 
     static std::string GenerateUuid();
     static std::string ToLower(std::string s);

@@ -50,6 +50,7 @@ add_executable(user-service
     src/user-service/handlers/auth/login_handler.cpp
     src/user-service/handlers/users/get_by_login_handler.cpp
     src/user-service/handlers/users/search_handler.cpp
+    src/user-service/handlers/users/cache_stats_handler.cpp
     ${SHARED_SOURCES}
 )
 target_link_libraries(user-service userver::core userver::postgresql jwt-cpp::jwt-cpp)
@@ -68,6 +69,7 @@ add_executable(folder-file-service
     src/folder-file-service/handlers/folders/create_folder_handler.cpp
     src/folder-file-service/handlers/folders/list_folders_handler.cpp
     src/folder-file-service/handlers/folders/delete_folder_handler.cpp
+    src/folder-file-service/handlers/folders/cache_stats_handler.cpp
     src/folder-file-service/handlers/files/create_file_handler.cpp
     src/folder-file-service/handlers/files/get_file_handler.cpp
     src/folder-file-service/handlers/files/delete_file_handler.cpp

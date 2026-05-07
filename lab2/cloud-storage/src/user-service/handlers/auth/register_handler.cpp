@@ -17,6 +17,17 @@ std::string RegisterHandler::HandleRequestThrow(
     auto& response = request.GetHttpResponse();
     response.SetContentType("application/json");
 
+    const auto& real_ip_header = request.GetHeader("X-Real-IP");
+    const std::string ip = real_ip_header.empty() ? "unknown" : std::string(real_ip_header);
+    auto rl = rate_limiter_.Check(ip);
+    response.SetHeader(std::string("X-RateLimit-Limit"), std::to_string(rl.limit));
+    response.SetHeader(std::string("X-RateLimit-Remaining"), std::to_string(rl.remaining));
+    response.SetHeader(std::string("X-RateLimit-Reset"), std::to_string(rl.reset_epoch_sec));
+    if (!rl.allowed) {
+        response.SetStatus(userver::server::http::HttpStatus::kTooManyRequests);
+        return MakeError("Too Many Requests", "Rate limit exceeded");
+    }
+
     userver::formats::json::Value body;
     try {
         body = userver::formats::json::FromString(request.RequestBody());

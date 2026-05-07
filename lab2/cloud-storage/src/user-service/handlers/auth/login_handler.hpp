@@ -1,6 +1,7 @@
 #pragma once
 
 #include "service/user_service.hpp"
+#include "ratelimit/token_bucket.hpp"
 
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
@@ -25,6 +26,7 @@ public:
 
 private:
     user_service::UserService& user_service_;
+    mutable RateLimiter rate_limiter_{20, 20};
 };
 
 void AppendLoginHandler(userver::components::ComponentList& list);

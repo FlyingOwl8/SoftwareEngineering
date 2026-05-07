@@ -1,7 +1,6 @@
 #pragma once
 
 #include "service/user_service.hpp"
-#include "ratelimit/token_bucket.hpp"
 
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
@@ -9,14 +8,14 @@
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/server/request/request_context.hpp>
 
-namespace disk::handlers::auth {
+namespace disk::handlers::users {
 
-class RegisterHandler final : public userver::server::handlers::HttpHandlerBase {
+class CacheStatsHandler final : public userver::server::handlers::HttpHandlerBase {
 public:
-    static constexpr std::string_view kName = "handler-auth-register";
+    static constexpr std::string_view kName = "handler-users-cache-stats";
 
-    RegisterHandler(const userver::components::ComponentConfig& config,
-                    const userver::components::ComponentContext& context)
+    CacheStatsHandler(const userver::components::ComponentConfig& config,
+                      const userver::components::ComponentContext& context)
         : HttpHandlerBase(config, context),
           user_service_(context.FindComponent<user_service::UserService>()) {}
 
@@ -26,9 +25,8 @@ public:
 
 private:
     user_service::UserService& user_service_;
-    mutable RateLimiter rate_limiter_{10, 10};
 };
 
-void AppendRegisterHandler(userver::components::ComponentList& list);
+void AppendCacheStatsHandler(userver::components::ComponentList& list);
 
-}  // namespace disk::handlers::auth
+}  // namespace disk::handlers::users

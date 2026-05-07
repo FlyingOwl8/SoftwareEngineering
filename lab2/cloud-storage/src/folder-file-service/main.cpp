@@ -5,6 +5,7 @@
 #include "handlers/folders/create_folder_handler.hpp"
 #include "handlers/folders/list_folders_handler.hpp"
 #include "handlers/folders/delete_folder_handler.hpp"
+#include "handlers/folders/cache_stats_handler.hpp"
 #include "handlers/files/create_file_handler.hpp"
 #include "handlers/files/get_file_handler.hpp"
 #include "handlers/files/delete_file_handler.hpp"
@@ -46,6 +47,7 @@ int main(int argc, char* argv[]) {
     disk::handlers::folders::AppendCreateFolderHandler(component_list);
     disk::handlers::folders::AppendListFoldersHandler(component_list);
     disk::handlers::folders::AppendDeleteFolderHandler(component_list);
+    disk::handlers::folders::AppendFolderCacheStatsHandler(component_list);
     disk::handlers::files::AppendCreateFileHandler(component_list);
     disk::handlers::files::AppendGetFileHandler(component_list);
     disk::handlers::files::AppendDeleteFileHandler(component_list);

@@ -72,6 +72,11 @@ components_manager:
         types:
           - jwt-auth
 
+    handler-folders-cache-stats:
+      path: /api/v1/folders/cache-stats
+      method: GET
+      task_processor: main-task-processor
+
     jwt-auth-checker:
       load-enabled: true
 

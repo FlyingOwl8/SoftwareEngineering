@@ -2,6 +2,7 @@
 
 #include "repository/i_file_system_repository.hpp"
 #include "models/models.hpp"
+#include "cache/ttl_cache.hpp"
 
 #include <memory>
 #include <optional>
@@ -47,8 +48,13 @@ public:
 
     bool DeleteFile(const std::string& file_id);
 
+    TtlCache<std::string, std::vector<models::Folder>>::Stats GetFolderCacheStats() const {
+        return folders_cache_.GetStats();
+    }
+
 private:
     std::unique_ptr<IFileSystemRepository> repository_;
+    mutable TtlCache<std::string, std::vector<models::Folder>> folders_cache_{std::chrono::seconds(30)};
 
     static std::string GenerateUuid();
 };
