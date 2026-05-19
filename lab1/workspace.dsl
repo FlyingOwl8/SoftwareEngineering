@@ -3,11 +3,7 @@ workspace  {
 
     model {
         user = person "Пользователь" "Клиент, работающий с API"
-        admin = person "Администратор" 
-
-        telegram = softwareSystem "Telegram" "Внешняя система для отправки сообщений пользователям" {
-            tags "ExternalSystem"
-        }
+        admin = person "Администратор"
 
         cloudStorage = softwareSystem "Cloud Storage" "Система хранения файлов" {
 
@@ -24,19 +20,19 @@ workspace  {
             }
 
             folderFileService = container "FolderFile Service" {
-                description  "Управляет папками и файлами"
+                description  "Управляет папками и файлами; публикует FolderCreated в Kafka"
                 technology  "C++ userver"
                 tags  "Service"
             }
 
-            messageService = container "Message Service" {
-                description  "Отправляет сообщения"
+            folderConsumer = container "Folder Consumer" {
+                description  "Читает FolderCreated из Kafka и записывает папки в MongoDB"
                 technology  "C++ userver"
                 tags  "Service"
             }
 
             kafka = container "Event Topic" {
-                description  "Брокер сообщений для асинхронной отправки событий"
+                description  "Журнал событий для CQRS"
                 technology  "Apache Kafka"
                 tags  "EventTopic"
             }
@@ -57,14 +53,14 @@ workspace  {
             admin -> cloudStorage.main "Вызывает API (как администратор)" "HTTPS/REST"
 
             cloudStorage.main -> cloudStorage.userService "Регистрация, поиск, проверка и управление данными пользователей" "HTTP/REST"
-            cloudStorage.main -> cloudStorage.folderFileService "Управление папками и файлами " "HTTP/REST"
+            cloudStorage.main -> cloudStorage.folderFileService "Управление папками и файлами" "HTTP/REST"
 
             cloudStorage.userService -> cloudStorage.userDb "CRUD запросы по пользовательским данным" "SQL/TCP"
-            cloudStorage.folderFileService -> cloudStorage.folderFileDb "CRUD запросы по папкам/файлам, сохранение/извлечение содержимого" "MQL/TCP"
+            cloudStorage.folderFileService -> cloudStorage.folderFileDb "Чтение папок/файлов" "MQL/TCP"
 
-            cloudStorage.userService -> cloudStorage.kafka "Публикация событий для сообщений" "Kafka"
-            cloudStorage.kafka -> cloudStorage.messageService "Получение событий для сообщений" "Kafka"
-            cloudStorage.messageService -> telegram "Отправка сообщений" "HTTPS/Telegram API"
+            cloudStorage.folderFileService -> cloudStorage.kafka "Публикация FolderCreated" "Kafka"
+            cloudStorage.kafka -> cloudStorage.folderConsumer "Доставка FolderCreated" "Kafka"
+            cloudStorage.folderConsumer -> cloudStorage.folderFileDb "Запись папки в MongoDB" "MQL/TCP"
         }
     }
 
@@ -80,7 +76,7 @@ workspace  {
         }
 
         dynamic cloudStorage  {
-        description "Сценарий: поиск пользователя"
+            description "Сценарий: поиск пользователя"
             autolayout lr
 
             admin -> cloudStorage.main "Запрос на поиск пользователя (с JWT администратора)" "HTTPS/REST"
@@ -93,7 +89,19 @@ workspace  {
             cloudStorage.main -> admin "Ответ OK с данными пользователей" "HTTPS/REST"
         }
 
-        
+        dynamic cloudStorage "CreateFolder" {
+            description "Сценарий: создание папки (CQRS + Kafka)"
+            autolayout lr
+
+            user -> cloudStorage.main "POST /api/v1/folders {name}" "HTTPS/REST"
+            cloudStorage.main -> cloudStorage.folderFileService "Создать папку" "HTTP/REST"
+            cloudStorage.folderFileService -> cloudStorage.folderFileDb "Проверка дублирования имени" "MQL/TCP"
+            cloudStorage.folderFileService -> cloudStorage.kafka "FolderCreated (JSON)" "Kafka"
+            cloudStorage.folderFileService -> cloudStorage.main "HTTP 201" "HTTP/REST"
+            cloudStorage.main -> user "HTTP 201 с данными папки" "HTTPS/REST"
+            cloudStorage.kafka -> cloudStorage.folderConsumer "FolderCreated" "Kafka"
+            cloudStorage.folderConsumer -> cloudStorage.folderFileDb "SaveFolder → MongoDB" "MQL/TCP"
+        }
 
         styles {
             element "Person" {

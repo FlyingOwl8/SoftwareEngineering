@@ -1,0 +1,114 @@
+components_manager:
+  task_processors:
+    main-task-processor:
+      worker_threads: $worker_threads
+    fs-task-processor:
+      worker_threads: 2
+    producer-task-processor:
+      worker_threads: 2
+      thread_name: kafka-prod
+
+  default_task_processor: main-task-processor
+
+  components:
+    server:
+      listener:
+        port: $server_port
+        task_processor: main-task-processor
+
+    logging:
+      fs-task-processor: fs-task-processor
+      loggers:
+        default:
+          file_path: '@stderr'
+          level: $log_level
+          overflow_behavior: discard
+
+    tracer:
+      service-name: folder-file-service
+
+    handler-folders-create:
+      path: /api/v1/folders
+      method: POST
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-folders-list:
+      path: /api/v1/folders
+      method: GET
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-folders-delete:
+      path: /api/v1/folders/{folder_id}
+      method: DELETE
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-files-create:
+      path: /api/v1/folders/{folder_id}/files
+      method: POST
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-files-get-by-name:
+      path: /api/v1/folders/{folder_id}/files/{file_name}
+      method: GET
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-files-delete:
+      path: /api/v1/folders/{folder_id}/files/{file_id}/delete
+      method: DELETE
+      task_processor: main-task-processor
+      auth:
+        types:
+          - jwt-auth
+
+    handler-folders-cache-stats:
+      path: /api/v1/folders/cache-stats
+      method: GET
+      task_processor: main-task-processor
+
+    jwt-auth-checker:
+      load-enabled: true
+
+    file-system-service:
+      load-enabled: true
+      use_mongo: $mongo_enabled
+      use_kafka: $kafka_enabled
+
+    kafka-producer-folder:
+      security_protocol: PLAINTEXT
+      delivery_timeout: 3s
+      queue_buffering_max: 100ms
+      enable_idempotence: false
+      load-enabled: $kafka_enabled
+
+    testsuite-support:
+      load-enabled: false
+
+    dns-client:
+      fs-task-processor: fs-task-processor
+
+    mongo-db:
+      dbconnection: "mongodb://mongodb:27017/cloud_storage"
+      load-enabled: $mongo_enabled
+
+    default-secdist-provider:
+      config: /etc/cloud-storage/secdist.json
+      load-enabled: $kafka_enabled
+
+    secdist:
+      provider: default-secdist-provider
+      load-enabled: $kafka_enabled

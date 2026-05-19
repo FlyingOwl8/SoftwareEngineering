@@ -1,0 +1,14 @@
+{
+  "kafka_settings": {
+    "kafka-producer-folder": {
+      "brokers": "kafka:9092",
+      "username": "",
+      "password": ""
+    },
+    "kafka-consumer-folder": {
+      "brokers": "kafka:9092",
+      "username": "",
+      "password": ""
+    }
+  }
+}

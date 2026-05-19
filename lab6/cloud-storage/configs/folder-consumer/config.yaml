@@ -1,0 +1,51 @@
+components_manager:
+  task_processors:
+    main-task-processor:
+      worker_threads: $worker_threads
+    fs-task-processor:
+      worker_threads: 2
+    consumer-task-processor:
+      worker_threads: 2
+      thread_name: kafka-cons
+    consumer-blocking-task-processor:
+      worker_threads: 2
+      thread_name: kafka-blk
+
+  default_task_processor: main-task-processor
+
+  components:
+    logging:
+      fs-task-processor: fs-task-processor
+      loggers:
+        default:
+          file_path: '@stderr'
+          level: $log_level
+          overflow_behavior: discard
+
+    tracer:
+      service-name: folder-consumer
+
+    folder-consumer-handler:
+      load-enabled: true
+
+    kafka-consumer-folder:
+      security_protocol: PLAINTEXT
+      group_id: folder-consumer-group
+      topics:
+        - folder-events
+      auto_offset_reset: smallest
+      max_batch_size: 10
+      poll_timeout: 500ms
+
+    dns-client:
+      fs-task-processor: fs-task-processor
+
+    mongo-db:
+      dbconnection: "mongodb://mongodb:27017/cloud_storage"
+      load-enabled: true
+
+    default-secdist-provider:
+      config: /etc/cloud-storage/secdist.json
+
+    secdist:
+      provider: default-secdist-provider
